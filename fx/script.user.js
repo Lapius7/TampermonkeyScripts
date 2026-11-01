@@ -1,9 +1,12 @@
 // ==UserScript==
 // @name         fx URL copy
 // @namespace    https://fx.lapius7.com/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Alt+Shift+F で、表示中のページの URL を fx○.lapius7.com 版に書き換えてコピーします。
 // @author       狐ノ瀬つづり
+// @homepageURL  https://github.com/Lapius7/TampermonkeyScripts
+// @updateURL    https://raw.githubusercontent.com/Lapius7/TampermonkeyScripts/main/fx/script.user.js
+// @downloadURL  https://raw.githubusercontent.com/Lapius7/TampermonkeyScripts/main/fx/script.user.js
 // @match        https://x.com/*
 // @match        https://twitter.com/*
 // @match        https://github.com/*
