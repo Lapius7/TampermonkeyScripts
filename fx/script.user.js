@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         fx URL copy
 // @namespace    https://fx.lapius7.com/
-// @version      1.1.1
+// @version      1.1.2
 // @description  ショートカット（初期値は Alt+Shift+F）で、表示中のページの URL を fx○.lapius7.com 版に書き換えてコピーします。ショートカットは Tampermonkey のメニューから変更できます。
 // @author       Lapius
 // @homepageURL  https://github.com/Lapius7/TampermonkeyScripts
@@ -20,6 +20,7 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_registerMenuCommand
+// @grant        GM_unregisterMenuCommand
 // @run-at       document-idle
 // @noframes
 // ==/UserScript==
@@ -233,8 +234,9 @@
       }
       if (a === "save" && pending) {
         GM_setValue(STORE_KEY, pending);
+        refreshMenu();
         close();
-        toast("ショートカットを保存しました", parts(pending).join(" + "));
+        toast("ショートカットを保存しました", parts(pending).join("+"));
       }
     });
     document.addEventListener("keydown", onKey, true);
@@ -244,11 +246,26 @@
 
   /* ---------- 本体 ---------- */
 
-  GM_registerMenuCommand("ショートカットを変更", openSettings);
-  GM_registerMenuCommand("ショートカットを初期値に戻す", () => {
-    GM_setValue(STORE_KEY, DEFAULT_SHORTCUT);
-    toast("ショートカットを初期値に戻しました", parts(DEFAULT_SHORTCUT).join(" + "));
-  });
+  const label = () => parts(loadShortcut()).join("+");
+  const menuIds = [];
+
+  /** メニューの表示は登録時に決まるので、設定が変わるたびに登録し直す */
+  function refreshMenu() {
+    while (menuIds.length) {
+      try {
+        GM_unregisterMenuCommand(menuIds.pop());
+      } catch {}
+    }
+    menuIds.push(
+      GM_registerMenuCommand(`ショートカットを変更（現在: ${label()}）`, openSettings),
+      GM_registerMenuCommand("ショートカットを初期値に戻す", () => {
+        GM_setValue(STORE_KEY, DEFAULT_SHORTCUT);
+        refreshMenu();
+        toast("ショートカットを初期値に戻しました", label());
+      }),
+    );
+  }
+  refreshMenu();
 
   document.addEventListener(
     "keydown",
