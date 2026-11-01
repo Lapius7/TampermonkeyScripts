@@ -6,7 +6,7 @@
 
 | スクリプト | 内容 | インストール |
 | --- | --- | --- |
-| [fx](fx/script.user.js) | `Alt+Shift+F` で、表示中のページの URL を `fx○.lapius7.com` 版に書き換えてコピーします。 | [インストール](https://raw.githubusercontent.com/Lapius7/TampermonkeyScripts/main/fx/script.user.js) |
+| [fx](fx/script.user.js) | ショートカット（初期値 `Alt+Shift+F`）で、表示中のページの URL を `fx○.lapius7.com` 版に書き換えてコピーします。 | [インストール](https://raw.githubusercontent.com/Lapius7/TampermonkeyScripts/main/fx/script.user.js) |
 
 ## インストール方法
 
@@ -24,7 +24,7 @@
 
 ## fx
 
-`x.com`、`github.com`、`youtube.com` などのページで `Alt+Shift+F` を押すと、そのページの URL を対応する fx サービスの URL に書き換えてコピーします。Discord などに貼ると、埋め込みで展開されます。
+`x.com`、`github.com`、`youtube.com` などのページでショートカット（初期値は `Alt+Shift+F`）を押すと、そのページの URL を対応する fx サービスの URL に書き換えてコピーします。Discord などに貼ると、埋め込みで展開されます。
 
 | 元の URL | コピーされる URL |
 | --- | --- |
@@ -34,6 +34,10 @@
 | `https://www.youtube.com/watch?v=HVGR2_9FfU8` | `https://fxyt.lapius7.com/watch?v=HVGR2_9FfU8` |
 | `https://youtu.be/HVGR2_9FfU8` | `https://fxyt.lapius7.com/watch?v=HVGR2_9FfU8` |
 | `https://music.youtube.com/watch?v=ID` | `https://m.fxyt.lapius7.com/watch?v=ID` |
+
+### ショートカットの変更
+
+Tampermonkey のアイコンを開き、fx のメニューから「ショートカットを変更」を選びます。設定したいキーの組み合わせを押して「保存」を押すと、すぐ反映されます。Ctrl・Alt・Shift・Meta のどれかを含める必要があります。「初期値に戻す」で `Alt+Shift+F` に戻せます。設定は Tampermonkey に保存され、スクリプトを更新しても消えません。
 
 ## スクリプトを足すには
 
