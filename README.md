@@ -12,6 +12,12 @@
 
 1. ブラウザに [Tampermonkey](https://www.tampermonkey.net/) を入れます。
 2. 上の表の「インストール」を開きます。Tampermonkey のインストール画面が出るので、「インストール」を押します。
+   インストール用の URL は次のとおりです。ブラウザのアドレス欄に貼って開いても、Tampermonkey が読み込みます。
+
+   ```
+   https://github.com/Lapius7/TampermonkeyScripts/raw/refs/heads/main/fx/script.user.js
+   ```
+
 3. 更新は Tampermonkey が `@updateURL` を見て自動で取り込みます。手動で確かめるときは、ダッシュボードの「最終更新」を押してください。
 
 インストール画面が出ない場合は、ダッシュボードで「新規スクリプト」を開き、`script.user.js` の中身を貼り付けて保存してください。この方法では自動更新が働くよう、先頭の `@updateURL` と `@downloadURL` を残します。
