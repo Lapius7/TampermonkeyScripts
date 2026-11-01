@@ -11,12 +11,9 @@
 ## インストール方法
 
 1. ブラウザに [Tampermonkey](https://www.tampermonkey.net/) を入れます。
-2. 上の表の「インストール」を開きます。Tampermonkey のインストール画面が出るので、「インストール」を押します。
-   インストール用の URL は次のとおりです。ブラウザのアドレス欄に貼って開いても、Tampermonkey が読み込みます。
+2. 次のリンクを開きます。Tampermonkey が入っていれば、インストール画面が自動で開くので、「インストール」を押します。
 
-   ```
-   https://github.com/Lapius7/TampermonkeyScripts/raw/refs/heads/main/fx/script.user.js
-   ```
+   [https://github.com/Lapius7/TampermonkeyScripts/raw/refs/heads/main/fx/script.user.js](https://github.com/Lapius7/TampermonkeyScripts/raw/refs/heads/main/fx/script.user.js)
 
 3. 更新は Tampermonkey が `@updateURL` を見て自動で取り込みます。手動で確かめるときは、ダッシュボードの「最終更新」を押してください。
 
