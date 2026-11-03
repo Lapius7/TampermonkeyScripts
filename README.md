@@ -8,6 +8,12 @@
 | --- | --- | --- |
 | [fx](fx/script.user.js) | ショートカット（初期値 `Alt+Shift+F`）で、表示中のページの URL を `fx○.lapius7.com` 版に書き換えてコピーします。 | [インストール](https://raw.githubusercontent.com/Lapius7/TampermonkeyScripts/main/fx/script.user.js) |
 
+## Fx サービスについて
+
+[Fx](https://fx.lapius7.com/) は、X・GitHub・YouTube などのリンクを `fx○.lapius7.com` 形式の URL に置き換えて共有できるサービスです。fx スクリプトは、表示中のページの URL をこの形式に書き換えてコピーします。
+
+- サービス: https://fx.lapius7.com/
+
 ## インストール方法
 
 1. ブラウザに [Tampermonkey](https://www.tampermonkey.net/) を入れます。
