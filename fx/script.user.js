@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         fx URL copy
 // @namespace    https://fx.lapius7.com/
-// @version      1.1.2
+// @version      1.2.0
 // @description  ショートカット（初期値は Alt+Shift+F）で、表示中のページの URL を fx○.lapius7.com 版に書き換えてコピーします。ショートカットは Tampermonkey のメニューから変更できます。
 // @author       Lapius
 // @homepageURL  https://github.com/Lapius7/TampermonkeyScripts
@@ -9,6 +9,7 @@
 // @downloadURL  https://raw.githubusercontent.com/Lapius7/TampermonkeyScripts/main/fx/script.user.js
 // @match        https://x.com/*
 // @match        https://twitter.com/*
+// @match        https://mobile.twitter.com/*
 // @match        https://github.com/*
 // @match        https://gist.github.com/*
 // @match        https://www.youtube.com/*
@@ -29,6 +30,7 @@
   "use strict";
 
   const STORE_KEY = "shortcut";
+  const X_RESERVED = new Set(["home", "explore", "search", "settings", "i", "notifications", "messages", "compose", "login", "signup", "tos", "privacy", "hashtag", "intent", "share"]);
   const DEFAULT_SHORTCUT = { code: "KeyF", alt: true, shift: true, ctrl: false, meta: false };
 
   /* ---------- ショートカット ---------- */
@@ -62,7 +64,15 @@
     const host = u.hostname.replace(/^www\./, "");
     const rest = u.pathname + u.search;
 
-    if (host === "x.com" || host === "twitter.com") return `https://fxx.lapius7.com${rest}`;
+    if (host === "x.com" || host === "twitter.com" || host === "mobile.twitter.com" || host === "mobile.x.com") {
+      // 投稿: /user/status/ID/photo/1 などの付属パスと s=20 などの追跡パラメータを落とす
+      const post = /^\/(?:i\/(?:web\/)?|([A-Za-z0-9_]{1,15})\/)status(?:es)?\/(\d+)/.exec(u.pathname);
+      if (post) return `https://fxx.lapius7.com/${post[1] ?? "i"}/status/${post[2]}`;
+      // プロフィール: /user/with_replies, /user/media などはプロフィール本体に寄せる
+      const prof = /^\/([A-Za-z0-9_]{1,15})(?:\/(?:with_replies|media|highlights|articles|likes|followers|following|verified_followers|photo|header_photo))?\/?$/.exec(u.pathname);
+      if (prof && !X_RESERVED.has(prof[1].toLowerCase())) return `https://fxx.lapius7.com/${prof[1]}`;
+      return `https://fxx.lapius7.com${rest}`;
+    }
 
     if (host === "github.com") {
       // #L10-L20 は、サーバーに届かないので ?L10-L20 に置き換える
@@ -71,12 +81,30 @@
     }
     if (host === "gist.github.com") return `https://fxgh.lapius7.com/gist${rest}`;
 
-    if (host === "youtube.com" || host === "m.youtube.com") return `https://fxyt.lapius7.com${rest}`;
-    if (host === "music.youtube.com") return `https://m.fxyt.lapius7.com${rest}`;
+    if (host === "youtube.com" || host === "m.youtube.com" || host === "music.youtube.com") {
+      const base = host === "music.youtube.com" ? "https://m.fxyt.lapius7.com" : "https://fxyt.lapius7.com";
+      const p = u.pathname;
+      const keep = (...names) => {
+        const q = new URLSearchParams();
+        for (const n of names) if (u.searchParams.get(n)) q.set(n, u.searchParams.get(n));
+        const str = q.toString();
+        return str ? `?${str}` : "";
+      };
+      // 動画（通常・YouTube Music 共通）。再生位置と再生リストは残し、si などの追跡は落とす
+      if (p === "/watch") return `${base}/watch${keep("v", "list", "t", "start")}`;
+      // ショート・ライブ・埋め込み
+      const vid = /^\/(shorts|live|embed)\/([^/?#]+)/.exec(p);
+      if (vid) return `${base}/${vid[1]}/${vid[2]}${keep("t", "start")}`;
+      if (p === "/playlist") return `${base}/playlist${keep("list")}`;
+      // チャンネル: /@name/videos /shorts /streams /community などはチャンネル本体に寄せる
+      const ch = /^\/(@[^/?#]+|(?:channel|user|c)\/[^/?#]+)/.exec(p);
+      if (ch) return `${base}/${ch[1]}`;
+      return `${base}${rest}`;
+    }
     if (host === "youtu.be") {
-      const id = u.pathname.slice(1);
-      const t = u.searchParams.get("t");
-      return id ? `https://fxyt.lapius7.com/watch?v=${id}${t ? `&t=${t}` : ""}` : null;
+      const m = /^\/([^/?#]+)/.exec(u.pathname);
+      const t = u.searchParams.get("t") ?? u.searchParams.get("start");
+      return m ? `https://fxyt.lapius7.com/watch?v=${m[1]}${t ? `&t=${t}` : ""}` : null;
     }
     return null;
   }
