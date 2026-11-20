@@ -58,28 +58,29 @@
 
   /* ---------- 変換 ---------- */
 
-  /** 元の URL を fx 版に変換する。対象外なら null */
+  /** 元の URL を fx 版に変換する。{ url, kind } を返し、対象外なら null。kind はオプション選択の種類 */
   function convert(href) {
     const u = new URL(href);
     const host = u.hostname.replace(/^www\./, "");
     const rest = u.pathname + u.search;
+    const out = (url, kind = "") => ({ url, kind });
 
     if (host === "x.com" || host === "twitter.com" || host === "mobile.twitter.com" || host === "mobile.x.com") {
       // 投稿: /user/status/ID/photo/1 などの付属パスと s=20 などの追跡パラメータを落とす
       const post = /^\/(?:i\/(?:web\/)?|([A-Za-z0-9_]{1,15})\/)status(?:es)?\/(\d+)/.exec(u.pathname);
-      if (post) return `https://fxx.lapius7.com/${post[1] ?? "i"}/status/${post[2]}`;
+      if (post) return out(`https://fxx.lapius7.com/${post[1] ?? "i"}/status/${post[2]}`, "xpost");
       // プロフィール: /user/with_replies, /user/media などはプロフィール本体に寄せる
       const prof = /^\/([A-Za-z0-9_]{1,15})(?:\/(?:with_replies|media|highlights|articles|likes|followers|following|verified_followers|photo|header_photo))?\/?$/.exec(u.pathname);
-      if (prof && !X_RESERVED.has(prof[1].toLowerCase())) return `https://fxx.lapius7.com/${prof[1]}`;
-      return `https://fxx.lapius7.com${rest}`;
+      if (prof && !X_RESERVED.has(prof[1].toLowerCase())) return out(`https://fxx.lapius7.com/${prof[1]}`);
+      return out(`https://fxx.lapius7.com${rest}`);
     }
 
     if (host === "github.com") {
       // #L10-L20 は、サーバーに届かないので ?L10-L20 に置き換える
       const range = /^#(L\d+(?:-L\d+)?)$/.exec(u.hash);
-      return `https://fxgh.lapius7.com${u.pathname}${range ? `?${range[1]}` : u.search}`;
+      return out(`https://fxgh.lapius7.com${u.pathname}${range ? `?${range[1]}` : u.search}`);
     }
-    if (host === "gist.github.com") return `https://fxgh.lapius7.com/gist${rest}`;
+    if (host === "gist.github.com") return out(`https://fxgh.lapius7.com/gist${rest}`);
 
     if (host === "youtube.com" || host === "m.youtube.com" || host === "music.youtube.com") {
       const base = host === "music.youtube.com" ? "https://m.fxyt.lapius7.com" : "https://fxyt.lapius7.com";
@@ -90,24 +91,59 @@
         const str = q.toString();
         return str ? `?${str}` : "";
       };
-      // 動画（通常・YouTube Music 共通）。再生位置と再生リストは残し、si などの追跡は落とす
-      if (p === "/watch") return `${base}/watch${keep("v", "list", "t", "start")}`;
+      // 動画は /<ID> に縮める。再生位置は残し、si などの追跡は落とす。再生リストつきだけ /watch を残す
+      if (p === "/watch") {
+        const v = u.searchParams.get("v");
+        if (!v) return null;
+        if (u.searchParams.get("list")) return out(`${base}/watch${keep("v", "list", "t", "start")}`, "ytvideo");
+        return out(`${base}/${v}${keep("t", "start")}`, "ytvideo");
+      }
       // ショート・ライブ・埋め込み
-      const vid = /^\/(shorts|live|embed)\/([^/?#]+)/.exec(p);
-      if (vid) return `${base}/${vid[1]}/${vid[2]}${keep("t", "start")}`;
-      if (p === "/playlist") return `${base}/playlist${keep("list")}`;
+      const vid = /^\/(?:shorts|live|embed)\/([^/?#]+)/.exec(p);
+      if (vid) return out(`${base}/${vid[1]}${keep("t", "start")}`, "ytvideo");
+      if (p === "/playlist") return out(`${base}/playlist${keep("list")}`);
       // チャンネル: /@name/videos /shorts /streams /community などはチャンネル本体に寄せる
       const ch = /^\/(@[^/?#]+|(?:channel|user|c)\/[^/?#]+)/.exec(p);
-      if (ch) return `${base}/${ch[1]}`;
-      return `${base}${rest}`;
+      if (ch) return out(`${base}/${ch[1]}`);
+      return out(`${base}${rest}`);
     }
     if (host === "youtu.be") {
       const m = /^\/([^/?#]+)/.exec(u.pathname);
       const t = u.searchParams.get("t") ?? u.searchParams.get("start");
-      return m ? `https://fxyt.lapius7.com/watch?v=${m[1]}${t ? `&t=${t}` : ""}` : null;
+      return m ? out(`https://fxyt.lapius7.com/${m[1]}${t ? `?t=${t}` : ""}`, "ytvideo") : null;
     }
     return null;
   }
+
+  /** サービスごとの付け足し。items は同時に1つだけ選べる */
+  const OPTIONS = {
+    xpost: {
+      title: "X の表示オプション",
+      items: [
+        { key: "", label: "標準" },
+        { key: "d", label: "/d", note: "メディアを大きく" },
+        { key: "m", label: "/m", note: "画像を1枚にまとめる" },
+        { key: "g", label: "/g", note: "最小限の表示" },
+        { key: "t", label: "/t", note: "テキストのみ" },
+        { key: "ja", label: "/ja", note: "日本語に翻訳" },
+        { key: "en", label: "/en", note: "英語に翻訳" },
+        { key: "ko", label: "/ko", note: "韓国語に翻訳" },
+        { key: "zh", label: "/zh", note: "中国語に翻訳" },
+        { key: "es", label: "/es", note: "スペイン語に翻訳" },
+        { key: "fr", label: "/fr", note: "フランス語に翻訳" },
+        { key: "de", label: "/de", note: "ドイツ語に翻訳" },
+      ],
+      apply: (url, key) => (key ? `${url}/${key}` : url),
+    },
+    ytvideo: {
+      title: "YouTube の表示オプション",
+      items: [
+        { key: "", label: "標準" },
+        { key: "direct", label: "?direct", note: "動画ファイルを直接再生" },
+      ],
+      apply: (url, key) => (key ? `${url}${url.includes("?") ? "&" : "?"}${key}` : url),
+    },
+  };
 
   /* ---------- UI（Shadow DOM でページの CSS と分離） ---------- */
 
@@ -161,13 +197,15 @@
     button.primary { color: var(--bg); background: var(--fg); border-color: var(--fg); }
     button.primary:hover { opacity: .88; }
     button:disabled { opacity: .4; cursor: default; }
+    .picker { position: fixed; align-items: flex-start; }
+    .grow { flex: 1; min-width: 0; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .chip { height: 28px; padding: 0 10px; font: 500 12px/18px ui-monospace, "SF Mono", Menlo, Consolas, monospace; border-radius: 7px; }
+    .chip[aria-pressed="true"] { color: var(--bg); background: var(--fg); border-color: var(--fg); }
+    .picker .hint { margin-top: 8px; font-size: 12px; }
+    .x { flex: none; width: 26px; height: 26px; padding: 0; line-height: 1; border: 0; font-size: 18px; color: var(--sub); }
     @media (prefers-reduced-motion: reduce) { .toast, .overlay, .dialog { transition: none; } .bar { animation: none; display: none; } }
   `;
-
-  const ICON_OK =
-    '<svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8"/><path d="m6.5 10.2 2.5 2.5 4.5-5"/></svg>';
-  const ICON_ERR =
-    '<svg class="icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8"/><path d="M10 6v4.5M10 13.5v.01"/></svg>';
 
   function mount() {
     const host = document.createElement("div");
@@ -181,25 +219,88 @@
     return { host, wrap };
   }
 
-  const esc = (t) => t.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  /** innerHTML は YouTube などの Trusted Types で拒否されるので、DOM を直接組み立てる */
+  const SVG_TAGS = new Set(["svg", "circle", "path"]);
+  function h(tag, props, ...kids) {
+    const el = SVG_TAGS.has(tag) ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag);
+    for (const [k, v] of Object.entries(props ?? {})) {
+      if (v == null || v === false) continue;
+      if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid);
+    return el;
+  }
+
+  const icon = (isError) =>
+    h("svg", { class: "icon", viewBox: "0 0 20 20", fill: "none", stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round" },
+      h("circle", { cx: 10, cy: 10, r: 8 }),
+      h("path", { d: isError ? "M10 6v4.5M10 13.5v.01" : "m6.5 10.2 2.5 2.5 4.5-5" }));
 
   let toastTimer;
   let toastUi;
-  function toast(title, detail, isError = false) {
-    toastUi?.host.remove();
+  function closeToast() {
     clearTimeout(toastTimer);
+    toastUi?.host.remove();
+    toastUi = null;
+  }
+  function toast(title, detail, isError = false) {
+    closeToast();
     const ui = (toastUi = mount());
     const duration = isError ? 2800 : 2400;
-    ui.wrap.innerHTML =
-      `<div class="toast${isError ? " error" : ""}" role="status" aria-live="polite" style="--dur:${duration}ms">` +
-      `${isError ? ICON_ERR : ICON_OK}<div><div class="title">${esc(title)}</div>` +
-      `${detail ? `<div class="url">${esc(detail)}</div>` : ""}</div><span class="bar"></span></div>`;
-    const el = ui.wrap.firstElementChild;
+    const el = h("div", { class: `toast${isError ? " error" : ""}`, role: "status", "aria-live": "polite", style: `--dur:${duration}ms` },
+      icon(isError),
+      h("div", null, h("div", { class: "title" }, title), detail ? h("div", { class: "url" }, detail) : null),
+      h("span", { class: "bar" }));
+    ui.wrap.append(el);
     requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("show")));
     toastTimer = setTimeout(() => {
       el.classList.remove("show");
       setTimeout(() => ui.host.remove(), 220);
     }, duration);
+  }
+
+  /** コピー後に出すパネル。オプションを選ぶたびにそのURLをコピーし直す */
+  function openPicker(base) {
+    const spec = OPTIONS[base.kind];
+    closeToast();
+    const ui = (toastUi = mount());
+    let cur = "";
+    const urlEl = h("div", { class: "url" }, base.url);
+    const chips = spec.items.map((it) =>
+      h("button", { type: "button", class: "chip", "aria-pressed": it.key === "" ? "true" : "false", title: it.note ?? "", onclick: () => select(it.key) }, it.label));
+    const close = () => {
+      document.removeEventListener("keydown", onKey, true);
+      panel.classList.remove("show");
+      setTimeout(() => ui.host.remove(), 220);
+      if (toastUi === ui) toastUi = null;
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        close();
+      }
+    };
+    const select = (key) => {
+      cur = key;
+      const url = spec.apply(base.url, cur);
+      urlEl.textContent = url;
+      spec.items.forEach((it, i) => chips[i].setAttribute("aria-pressed", String(it.key === cur)));
+      GM_setClipboard(url, "text");
+      note.textContent = `コピーしました${spec.items.find((it) => it.key === cur)?.note ? `（${spec.items.find((it) => it.key === cur).note}）` : ""}`;
+    };
+    const note = h("div", { class: "hint" }, "コピーしました");
+    const panel = h("div", { class: "toast picker", role: "dialog", "aria-label": spec.title },
+      icon(false),
+      h("div", { class: "grow" },
+        h("div", { class: "title" }, spec.title),
+        urlEl,
+        h("div", { class: "chips" }, chips),
+        note),
+      h("button", { type: "button", class: "x", "aria-label": "閉じる", onclick: close }, "×"));
+    ui.wrap.append(panel);
+    document.addEventListener("keydown", onKey, true);
+    requestAnimationFrame(() => requestAnimationFrame(() => panel.classList.add("show")));
   }
 
   /** ショートカット設定ダイアログ。修飾キーを 1 つ以上含む組み合わせだけ受け付ける */
@@ -209,24 +310,25 @@
     dialogOpen = true;
     const ui = mount();
     let pending = null;
-    ui.wrap.innerHTML =
-      `<div class="overlay"><div class="dialog" role="dialog" aria-modal="true" aria-label="ショートカットの設定">` +
-      `<h2>ショートカットの設定</h2>` +
-      `<p class="desc">設定したいキーの組み合わせを押してください。Ctrl・Alt・Shift・Meta のどれかを含めます。</p>` +
-      `<div class="keys rec" aria-live="polite"></div><p class="msg"></p>` +
-      `<div class="actions"><button type="button" data-a="reset">初期値に戻す</button>` +
-      `<div><button type="button" data-a="cancel">キャンセル</button><button type="button" class="primary" data-a="save" disabled>保存</button></div></div>` +
-      `</div></div>`;
-    const overlay = ui.wrap.firstElementChild;
+    const overlay = h("div", { class: "overlay" },
+      h("div", { class: "dialog", role: "dialog", "aria-modal": "true", "aria-label": "ショートカットの設定" },
+        h("h2", null, "ショートカットの設定"),
+        h("p", { class: "desc" }, "設定したいキーの組み合わせを押してください。Ctrl・Alt・Shift・Meta のどれかを含めます。"),
+        h("div", { class: "keys rec", "aria-live": "polite" }),
+        h("p", { class: "msg" }),
+        h("div", { class: "actions" },
+          h("button", { type: "button", "data-a": "reset" }, "初期値に戻す"),
+          h("div", null,
+            h("button", { type: "button", "data-a": "cancel" }, "キャンセル"),
+            h("button", { type: "button", class: "primary", "data-a": "save", disabled: true }, "保存")))));
+    ui.wrap.append(overlay);
     const keys = overlay.querySelector(".keys");
     const msg = overlay.querySelector(".msg");
     const save = overlay.querySelector('[data-a="save"]');
 
     const render = (s, recording) => {
       keys.classList.toggle("rec", recording);
-      keys.innerHTML = s
-        ? parts(s).map((p) => `<kbd>${esc(p)}</kbd>`).join("")
-        : '<span class="hint">キーを押してください…</span>';
+      keys.replaceChildren(...(s ? parts(s).map((p) => h("kbd", null, p)) : [h("span", { class: "hint" }, "キーを押してください…")]));
     };
     const close = () => {
       document.removeEventListener("keydown", onKey, true);
@@ -300,10 +402,11 @@
     (e) => {
       if (dialogOpen || e.repeat || !matches(e, loadShortcut())) return;
       e.preventDefault();
-      const url = convert(location.href);
-      if (!url) return toast("fx に対応していないページです", location.hostname, true);
-      GM_setClipboard(url, "text");
-      toast("コピーしました", url);
+      const r = convert(location.href);
+      if (!r) return toast("fx に対応していないページです", location.hostname, true);
+      GM_setClipboard(r.url, "text");
+      if (OPTIONS[r.kind]) openPicker(r);
+      else toast("コピーしました", r.url);
     },
     true,
   );
