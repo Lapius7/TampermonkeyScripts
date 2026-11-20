@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         fx URL copy
 // @namespace    https://fx.lapius7.com/
-// @version      1.3.0
-// @description  ショートカット（初期値は Alt+Shift+F）で、表示中のページの URL を fx○.lapius7.com 版（YouTube は /動画ID の短い形）に書き換えてコピーします。X・YouTube では /m や /ja などのオプションを選べます。
+// @version      1.4.0
+// @description  ショートカット（初期値は Alt+Shift+F）で、表示中のページの URL を fx○.lapius7.com 版（YouTube は /動画ID の短い形）に書き換えてコピーします。X・YouTube では /m や /jp、?dearrow などのオプションを選べます。
 // @author       Lapius
 // @homepageURL  https://github.com/Lapius7/TampermonkeyScripts
 // @updateURL    https://raw.githubusercontent.com/Lapius7/TampermonkeyScripts/main/fx/script.user.js
@@ -119,13 +119,16 @@
   const OPTIONS = {
     xpost: {
       title: "X の表示オプション",
+      multi: false,
       items: [
         { key: "", label: "標準" },
-        { key: "d", label: "/d", note: "メディアを大きく" },
-        { key: "m", label: "/m", note: "画像を1枚にまとめる" },
+        { key: "d", label: "/d", note: "本文を省き、メディアを大きく表示" },
+        { key: "m", label: "/m", note: "複数画像を1枚にまとめる" },
         { key: "g", label: "/g", note: "最小限の表示" },
         { key: "t", label: "/t", note: "テキストのみ" },
-        { key: "ja", label: "/ja", note: "日本語に翻訳" },
+        { key: ".mp4", label: ".mp4", note: "動画ファイルそのもの" },
+        { key: ".jpg", label: ".jpg", note: "画像ファイルそのもの" },
+        { key: "jp", label: "/jp", note: "日本語に翻訳" },
         { key: "en", label: "/en", note: "英語に翻訳" },
         { key: "ko", label: "/ko", note: "韓国語に翻訳" },
         { key: "zh", label: "/zh", note: "中国語に翻訳" },
@@ -133,15 +136,19 @@
         { key: "fr", label: "/fr", note: "フランス語に翻訳" },
         { key: "de", label: "/de", note: "ドイツ語に翻訳" },
       ],
-      apply: (url, key) => (key ? `${url}/${key}` : url),
+      apply: (url, [k]) => (!k ? url : k.startsWith(".") ? `${url}${k}` : `${url}/${k}`),
     },
     ytvideo: {
       title: "YouTube の表示オプション",
+      multi: true,
       items: [
-        { key: "", label: "標準" },
-        { key: "direct", label: "?direct", note: "動画ファイルを直接再生" },
+        { key: "dislikes", label: "?dislikes", note: "低評価の数を表示（Return YouTube Dislike）" },
+        { key: "dearrow", label: "?dearrow", note: "DeArrow のタイトルとサムネイルに置き換える" },
+        { key: "nothumb", label: "?nothumb", note: "サムネイルを付けない" },
+        { key: "stock", label: "?stock", note: "YouTube 公式のプレーヤーで埋め込む" },
+        { key: "direct", label: "?direct", note: "動画ファイル（mp4）へ直接移動する" },
       ],
-      apply: (url, key) => (key ? `${url}${url.includes("?") ? "&" : "?"}${key}` : url),
+      apply: (url, keys) => (keys.length ? `${url}${url.includes("?") ? "&" : "?"}${keys.join("&")}` : url),
     },
   };
 
@@ -265,10 +272,10 @@
     const spec = OPTIONS[base.kind];
     closeToast();
     const ui = (toastUi = mount());
-    let cur = "";
+    const sel = new Set(spec.multi ? [] : [""]);
     const urlEl = h("div", { class: "url" }, base.url);
     const chips = spec.items.map((it) =>
-      h("button", { type: "button", class: "chip", "aria-pressed": it.key === "" ? "true" : "false", title: it.note ?? "", onclick: () => select(it.key) }, it.label));
+      h("button", { type: "button", class: "chip", "aria-pressed": String(sel.has(it.key)), title: it.note ?? "", onclick: () => select(it.key) }, it.label));
     const close = () => {
       document.removeEventListener("keydown", onKey, true);
       panel.classList.remove("show");
@@ -282,12 +289,18 @@
       }
     };
     const select = (key) => {
-      cur = key;
-      const url = spec.apply(base.url, cur);
+      if (spec.multi) sel.has(key) ? sel.delete(key) : sel.add(key);
+      else {
+        sel.clear();
+        sel.add(key);
+      }
+      const keys = spec.items.filter((it) => sel.has(it.key) && it.key).map((it) => it.key);
+      const url = spec.apply(base.url, keys);
       urlEl.textContent = url;
-      spec.items.forEach((it, i) => chips[i].setAttribute("aria-pressed", String(it.key === cur)));
+      spec.items.forEach((it, i) => chips[i].setAttribute("aria-pressed", String(sel.has(it.key))));
       GM_setClipboard(url, "text");
-      note.textContent = `コピーしました${spec.items.find((it) => it.key === cur)?.note ? `（${spec.items.find((it) => it.key === cur).note}）` : ""}`;
+      const it = spec.items.find((i) => i.key === key);
+      note.textContent = `コピーしました${it?.note ? `｜${it.label}: ${it.note}` : ""}`;
     };
     const note = h("div", { class: "hint" }, "コピーしました");
     const panel = h("div", { class: "toast picker", role: "dialog", "aria-label": spec.title },
