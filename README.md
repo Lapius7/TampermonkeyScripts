@@ -1,35 +1,61 @@
-# TampermonkeyScripts
+<div align="center">
 
-[Tampermonkey](https://www.tampermonkey.net/) で使う自作ユーザースクリプトの置き場です。1スクリプトにつき1ディレクトリで、本体は `<名前>/script.user.js` に置いています。
+<p align="center">
+  <img src="docs/images/banner.png" alt="Tampermonkey Scripts" width="100%">
+</p>
 
-## スクリプト
+<p align="center"><b>English</b> | <a href="README.ja.md">日本語</a></p>
 
-| スクリプト | 内容 | インストール |
+<h1 align="center">Tampermonkey Scripts</h1>
+
+<h3 align="center">My own userscripts for Tampermonkey.</h3>
+
+<p align="center">One directory per script. Each script lives at <code>&lt;name&gt;/script.user.js</code>.</p>
+
+<p align="center">
+  <a href="https://www.tampermonkey.net/"><img alt="Tampermonkey" src="https://img.shields.io/badge/userscript-Tampermonkey-00485b?style=flat-square&logo=tampermonkey&logoColor=white"></a>
+  <a href="https://github.com/Lapius7/TampermonkeyScripts/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/Lapius7/TampermonkeyScripts?style=flat-square&color=e3b341&logo=github"></a>
+  <a href="https://github.com/Lapius7/TampermonkeyScripts/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/Lapius7/TampermonkeyScripts?label=last%20commit&style=flat-square&color=2f81f7"></a>
+</p>
+
+<p align="center"><a href="#scripts">Scripts</a> · <a href="#install">Install</a> · <a href="#fx">fx</a> · <a href="#adding-a-script">Adding a script</a></p>
+
+</div>
+
+---
+
+## Scripts
+
+| Script | Description | Install |
 | --- | --- | --- |
-| [fx](fx/script.user.js) | ショートカット（初期値 `Alt+Shift+F`）で、表示中のページの URL を `fx○.lapius7.com` 版に書き換えてコピーします。 | [インストール](https://raw.githubusercontent.com/Lapius7/TampermonkeyScripts/main/fx/script.user.js) |
+| [fx](fx/script.user.js) | Press a shortcut (default `Alt+Shift+F`) to copy the current page's URL rewritten to its `fx○.lapius7.com` form. | [Install](https://raw.githubusercontent.com/Lapius7/TampermonkeyScripts/main/fx/script.user.js) |
 
-## Fx サービスについて
+## About the Fx service
 
-[Fx](https://fx.lapius7.com/) は、X・GitHub・YouTube などのリンクを `fx○.lapius7.com` 形式の URL に置き換えて共有できるサービスです。fx スクリプトは、表示中のページの URL をこの形式に書き換えてコピーします。
+[Fx](https://fx.lapius7.com/) rewrites links from X, GitHub, YouTube and others into `fx○.lapius7.com` URLs so they can be shared. The fx script rewrites the page you are on into that form and copies it.
 
-- サービス: https://fx.lapius7.com/
+- Service: https://fx.lapius7.com/
 
-## インストール方法
+## Install
 
-1. ブラウザに [Tampermonkey](https://www.tampermonkey.net/) を入れます。
-2. 次のリンクを開きます。Tampermonkey が入っていれば、インストール画面が自動で開くので、「インストール」を押します。
+1. Install [Tampermonkey](https://www.tampermonkey.net/) in your browser.
+2. Open the link below. If Tampermonkey is installed, the install screen opens automatically. Press "Install".
 
    [https://github.com/Lapius7/TampermonkeyScripts/raw/refs/heads/main/fx/script.user.js](https://github.com/Lapius7/TampermonkeyScripts/raw/refs/heads/main/fx/script.user.js)
 
-3. 更新は Tampermonkey が `@updateURL` を見て自動で取り込みます。手動で確かめるときは、ダッシュボードの「最終更新」を押してください。
+3. Tampermonkey picks up updates by itself through `@updateURL`. To check by hand, press "Last updated" in the dashboard.
 
-インストール画面が出ない場合は、ダッシュボードで「新規スクリプト」を開き、`script.user.js` の中身を貼り付けて保存してください。この方法では自動更新が働くよう、先頭の `@updateURL` と `@downloadURL` を残します。
+> [!TIP]
+> If the install screen does not open, create a new script in the dashboard, paste the contents of `script.user.js`, and save. Keep `@updateURL` and `@downloadURL` at the top so auto-update keeps working.
 
 ## fx
 
-`x.com`、`github.com`、`youtube.com` などのページでショートカット（初期値は `Alt+Shift+F`）を押すと、そのページの URL を対応する fx サービスの URL に書き換えてコピーします。Discord などに貼ると、埋め込みで展開されます。
+On pages such as `x.com`, `github.com` and `youtube.com`, press the shortcut (default `Alt+Shift+F`). The page URL is rewritten to the matching fx service URL and copied. Pasted into Discord and similar apps, it unfurls as an embed.
 
-| 元の URL | コピーされる URL |
+<details>
+<summary>URL examples</summary>
+
+| Original URL | Copied URL |
 | --- | --- |
 | `https://x.com/jack/status/20` | `https://fxx.lapius7.com/jack/status/20` |
 | `https://github.com/o/r/blob/main/a.ts#L10-L20` | `https://fxgh.lapius7.com/o/r/blob/main/a.ts?L10-L20` |
@@ -38,10 +64,17 @@
 | `https://youtu.be/HVGR2_9FfU8` | `https://fxyt.lapius7.com/HVGR2_9FfU8` |
 | `https://music.youtube.com/watch?v=ID` | `https://m.fxyt.lapius7.com/watch?v=ID` |
 
-### ショートカットの変更
+</details>
 
-Tampermonkey のアイコンを開き、fx のメニューから「ショートカットを変更」を選びます。設定したいキーの組み合わせを押して「保存」を押すと、すぐ反映されます。Ctrl・Alt・Shift・Meta のどれかを含める必要があります。「初期値に戻す」で `Alt+Shift+F` に戻せます。設定は Tampermonkey に保存され、スクリプトを更新しても消えません。
+On X posts and YouTube videos, a panel opens after copying. Choosing an option copies the URL again with it applied. X offers `/d`, `/m`, `/g`, `/t`, `.mp4`, `.jpg` and translation suffixes such as `/jp`. YouTube offers `?dislikes`, `?dearrow`, `?nothumb`, `?stock` and `?direct`.
 
-## スクリプトを足すには
+### Change the shortcut
 
-`<名前>/script.user.js` を作り、メタデータに `@updateURL` と `@downloadURL` を書きます。変更したら `@version` を上げてください。上げないと、既存の利用者に更新が届きません。
+Open the Tampermonkey icon and choose "ショートカットを変更" (change the shortcut) from the fx menu. Press the key combination you want and press "保存" (save). It takes effect at once. The combination must include Ctrl, Alt, Shift or Meta. "初期値に戻す" (reset) restores `Alt+Shift+F`. The setting is stored in Tampermonkey and survives script updates.
+
+> [!NOTE]
+> The script's menu and dialogs are in Japanese. The script has only been checked by reading its code here; running it in a browser was not re-verified for this README.
+
+## Adding a script
+
+Create `<name>/script.user.js` and put `@updateURL` and `@downloadURL` in its metadata. Raise `@version` whenever you change it. Without that, existing users do not receive the update.
